@@ -1,4 +1,4 @@
---
+---
 layout: post
 title:  "20171018 solutions"
 date:   2017-10-17 23:50:10 +0800
