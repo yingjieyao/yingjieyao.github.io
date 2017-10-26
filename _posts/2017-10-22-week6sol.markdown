@@ -31,6 +31,226 @@ int main() {
     }
     return 0;
 }
+```
 
+### B
+
+给3000个不大于5000的正整数，求两两相加得到的数中最大的1000个数。
+
+一种方法是，我们要选择生成的最大的`m`个数，那么在原来的数组`pre`中取最大的`T`个，两两相加生成`T*(T-1) / 2`个数，对这些数排序取最大的`m`个就好了，但是这里要保证在原数组中第`T+1`个数`pre[T+1]`与最大的数的和，比之前生成的`T*(T-1)/2`个数大就好了。
+这样可以避免对3000 * 2999 / 2 个数排序，而只需要分别对3000和`T*(T-1)/2`个数排序就好了。一种简单的思路是，不管m是多少，都取`pre`中最大的`m`个数，用它们生成`1000 * 999 / 2`个数，然后取这些数里面最大的m个就好了。
+
+```C
+#include <stdio.h>
+#include <stdlib.h>
+
+#define ll long long
+void quick_sort(int arr[], int beg, int ed) {
+    if (beg >= ed) return;
+    ll tmp = arr[beg];
+    int left = beg, right = ed, t;
+    while (left < right) {
+        while (left < right && arr[right] >= tmp) right--;
+        if (left < right) {
+            arr[left] = arr[right];
+            left++;
+        }
+
+        while (left < right && arr[left] <= tmp) left++;
+        if (left < right) {
+            arr[right] = arr[left];
+            right--;
+        }
+    }
+    arr[left] = tmp;
+    quick_sort(arr, beg, left - 1);
+    quick_sort(arr, left + 1, ed);
+}
+
+int arr[1000 * 1000 / 2];
+int pre[3333];
+int main() {
+    int n, m;
+    while (scanf("%d %d", &n, &m) == 2) {
+        int i, j;
+        for (i = 0; i < n; ++i) {
+            scanf("%d", pre + i);
+        }
+        int cnt = 0;
+        quick_sort(pre, 0, n - 1);
+        int test = m < n ? m : n;
+        for (i = n - 1; i >= n - test; --i) {
+            for (j = i - 1; j >= n - test; --j) {
+                arr[cnt++] = pre[i] + pre[j];
+            }
+        }
+        quick_sort(arr, 0, cnt - 1);
+        for (i = cnt- 1; i >= cnt - m; --i) {
+            printf("%d ", arr[i]);
+        }
+        puts("");
+    }
+    return 0;
+}
+```
+
+另一个方法是从整数的大小5000入手。那么生成的整数最大是10000(5000 + 5000)，最小是2(1 + 1)。那么可以统计一下生成的数中，每个数分别出现多少次。然后从10000开始输出`m`个就好了。这其实就是**计数排序**，也叫**桶排序**。
+
+```C
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+
+int num[10005];
+int pre[3333];
+int main() {
+    int n, m;
+    while (scanf("%d %d", &n, &m) == 2) {
+        int i, j;
+        memset(num, 0, sizeof(num));
+        for (i = 0; i < n; ++i) scanf("%d", &pre[i]);
+        for (i = 0; i < n; ++i)
+            for (j = i + 1; j < n; ++j)
+                num[pre[i] + pre[j]] ++;
+
+        for (i = 10000; i >= 0; --i) {
+            while (m && num[i]) {
+                num[i]--, m--;
+                printf("%d%c", i, m ? ' ' : '\n');
+            }
+            if (!m) break;
+        }
+    }
+    return 0;
+}
+```
+
+### C
+如果是一条直线上的话，那么根据冒泡排序的思想，`n`个人的话需要的交换次数是`n*(n-1)/2`。
+但是在圆环上呢。如果将圆环分成两半，然后分别对每一半进行逆序的话，就是我们要的效果。
+假设圆环长度是`n`，分成了长度为`a`和`n-a`的两段，那么需要的总的交换次数就是
+`a * (a - 1)/ 2 + (n - a) * (n - a - 1)/ 2`，求这个一元二次方程的最优解可以得到`a = n / 2`或者`a = n - n / 2`。
+注意输入数据的范围，有可能超出int。
+```C
+#include <stdio.h>
+
+#define ll long long
+
+ll cal(ll n) {
+    return n * (n - 1) / 2;
+}
+
+int main() {
+    ll n;
+    while (scanf("%lld", &n) == 1) {
+        printf("%lld\n", cal(n/2) + cal(n - n / 2));
+    }
+    return 0;
+}
+```
+
+### D
+如果一个元素`arr[i]`可以作为排序之前的主元的话，那么它应该大于所有它左边的整数，并且小于所有在它右边的整数。
+其实只要`arr[i]`大于左边所有数的最大值，并且小于它右边所有数的最小值就好了。
+
+```C
+#include <string.h>
+#include <stdio.h>
+#include <string.h>
+
+int arr[100000 + 5];
+int maxx[100000 + 5];
+int ans[100000 + 5];
+
+int main() {
+    int n;
+    while (scanf("%d", &n) == 1) {
+        memset(maxx, 0, sizeof(maxx));
+        int cnt = 0;
+        int mx = 0;
+        int i;
+        for (i = 0; i < n; ++i) {
+            scanf("%d", &arr[i]);
+            maxx[i] = mx;
+            if (mx < arr[i]) mx = arr[i];
+        }
+
+        int minn = 0x7fffffff;
+        for (i = n - 1; i >= 0; --i) {
+            if (arr[i] > maxx[i] && arr[i] < minn) {
+                ans[cnt++] = arr[i];
+            }
+            if (arr[i] < minn) minn = arr[i];
+        }
+        printf("%d", cnt);
+        for (i = cnt - 1; i >= 0; --i) {
+            printf(" %d", ans[i]);
+        }
+        puts("");
+    }
+    return 0;
+}
+```
+
+### E
+
+回顾一下快速排序的过程。经过一趟划分之后，小于`val`的值被放在了左边，大于`val`的值被放在了右边，`arr[left]=val`，表示将第`left`个位置的值变为`val`。在后续排序的过程中，我们不会去动`left`位置上的值。所以这个时候`val`就是`arr`数组中第`left+1`大的数(如果下标从0开始的话)。
+
+```C
+#include <stdio.h>
+
+int getint() {
+    int r = 0; char t = 0;
+    while (t < '0' || t > '9')  {
+        if ((t = getchar()) == EOF) return EOF;
+    }
+    while (t >= '0' && t <= '9') {
+        r = r * 10 + t - '0';
+        t = getchar();
+    }
+    return r;
+}
+
+int k;
+void quick_sort(int arr[], int beg, int ed) {
+    if (beg == ed) {
+        return;
+    }
+    int tmp = arr[beg];
+    int left = beg, right = ed, t;
+    while (left < right) {
+        while (left < right && arr[right] >= tmp) right--;
+        if (left < right) {
+            arr[left] = arr[right];
+            left++;
+        }
+
+        while (left < right && arr[left] <= tmp) left++;
+        if (left < right) {
+            arr[right] = arr[left];
+            right--;
+        }
+    }
+    arr[left] = tmp;
+    if (left == k) { // 如果正好是在第k个位置上，这正好是我们要的答案
+        return;
+    } else if (left > k) { // 如果left > k，也就是我们要的第k大的在左侧
+        quick_sort(arr, beg, left - 1); 
+    } else { // 我们要的第k大的元素在右侧
+        quick_sort(arr, left + 1, ed);
+    }
+}
+
+int arr[10000001];
+int main() {
+    int n, i;
+    while (scanf("%d %d", &n, &k) == 2) {
+        k--;
+        for (i = 0; i < n; ++i) arr[i] = getint();
+        quick_sort(arr, 0, n - 1);
+        printf("%d\n", arr[k]);
+    }
+    return 0;
+}
 ```
 
