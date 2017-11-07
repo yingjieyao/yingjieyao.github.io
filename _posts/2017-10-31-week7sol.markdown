@@ -6,6 +6,9 @@ tag: 程序设计实践
 ---
 
 ### A
+结构体排序。
+我们只需要知道对于两个结构体变量a和b，什么时候让a排在b前面，什么时候让b排在a前面就好了。
+
 
 ```C
 #include <stdio.h>
@@ -18,7 +21,7 @@ struct node{
 
 int cmp(Node i, Node j) {
     if ((i.x < j.x) || (i.x == j.x && i.y < j.y))
-        return 1;
+        return 1; // i应该排在j前面
     else return 0;
 }
 void quick_sort(int beg, int ed) {
@@ -66,6 +69,9 @@ int main() {
 ```
 
 ### B
+链表快排。小于基准值的放到一个链表里，等于的放一个，大于的放另一个里面。
+
+然后分别对第一个和第三个排序，最后把它们三个拼接起来就好了。
 
 
 ```C
@@ -163,6 +169,11 @@ int main() {
 ```
 
 ### C
+
+用链表实现栈，只需要插入的时候插入到头节点后面；
+出栈的时候将头节点后面的那个一个节点出栈就可以。
+入栈出栈的时间复杂度都是O(1)。
+
 ```C
 #include <stdio.h>
 #include <stdlib.h>
