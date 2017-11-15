@@ -1,0 +1,276 @@
+---
+layout: post
+title:  "20171108 test solutions"
+date:   2017-11-14 22:16:14 +0800
+tag: 程序设计实践
+---
+
+### A
+其实就是给两个序列，问一个序列可不可能是另一个序列的合法出栈序列。
+
+```C
+#include <stdio.h>
+
+typedef struct stack {
+    int top;
+    int s[1055];
+}St;
+
+void init(St *st) {
+    st -> top = -1;
+}
+
+void push(St* st, int val) {
+    st->s[++st->top] = val;
+}
+
+int empty(St* st) {
+    return st -> top == -1;
+}
+
+void pop(St* st) {
+    st -> top --;
+}
+
+int top(St* st) {
+    return st -> s[st -> top];
+}
+
+int main() {
+#ifndef ONLINE_JUDGE
+    freopen("A.in", "r", stdin);
+#endif
+    St st; init(&st);
+    int num[1005];
+    int n;
+    while (scanf("%d", &n) == 1 && n) {
+        while (scanf("%d", &num[0]) != EOF && num[0]) {
+            init(&st);
+            int i, j;
+            push(&st, 1);
+            for (i = 1; i < n; ++i) scanf("%d", &num[i]);
+
+            for (i = 0, j = 1; i < n && j <=n;) { // 出栈序列中的第i个和到来序列中的第j个数(j)
+                if (top(&st) == num[i]) { // 如果栈顶的数字和现在出栈序列中的第一个数字一样，那么直接出栈就可以
+                    pop(&st); i++;
+                    if (empty(&st) && ++j <= n) push(&st, j);
+                } else { // 如果不相同，那么接着压下一个数
+                    push(&st, ++j);
+                }
+            }
+            if (empty(&st)) puts("Yes");
+            else puts("No");
+        }
+        puts("");
+    }
+
+    return 0;
+}
+```
+
+### B
+课上讲过一摸一样的题，基础二分题。
+
+注意精度。输入的是厘米，可以转换为米之后再计算，就没有精度问题了。
+
+```C
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+#define maxn 10005
+#define M 1000
+
+int n, k;
+int len[maxn];
+int cal(int x) {
+    int i, ret = 0;
+    for (i = 0; i < n; ++i) {
+        ret += (int)(len[i] / x);
+    }
+    return ret >= k;
+}
+
+int main() {
+#ifndef ONLINE_JUDGE
+    freopen("B.in", "r", stdin);
+#endif
+    while (scanf("%d %d", &n, &k) == 2) {
+        int max = 0; double r;
+        int i;
+        for (i = 0; i < n; ++i) {
+            scanf("%lf", &r);
+            len[i] = (r + 0.001) * M;
+            if (len[i] > max) max = len[i];
+        }
+        int low = 0, high = max;
+        while (high - low > 1) {
+            int mid = (low + high) >> 1;
+            if (cal(mid)) low = mid;
+            else high = mid;
+        }
+        if (high % 10 >= 5) high -= 5;
+        printf("%.2lf\n", (double)high / M);
+    }
+    return 0;
+}
+```
+
+### C
+这个题是要每次把橘子一分为二，而不是像之前说的将每个橘子分成任意多份。
+
+我们同样可以二分答案，然后统计当每个人分到的橘子瓣数是x的时候最多能分多少份。
+
+比如当前橘子有m瓣，那么我们可以分情况讨论。
+如果`m<x`，那么当前橘子不能被分了；
+如果`m >= x && m < 2 * x`，那么当前橘子只能分出来一份；
+如果`m >= 2*x`，那么当前橘子可以一分为二，并且分好的橘子仍然存在继续被分的可能。
+
+
+```C
+#include <stdio.h>
+#include <stdlib.h>
+
+#define ll long long
+
+int cmp(const void* a, const void* b) {
+    return *(int*)a - *(int*)b;
+}
+int arr[100005];
+int n, m;
+int check(int mid) {
+    ll ret = 0;
+    int i;
+    if (mid == 1) {
+        for (i = 0; i < n; ++i) {
+            ret += (ll)arr[i];
+        }
+        return ret >= m;
+    } else {
+        for (i = 0; i < n; ++i) {
+            if (arr[i] >= mid) {
+                int tmp = arr[i], t = 1;
+                while (tmp > mid) {
+                    if (tmp / 2 >= mid) t <<= 1;
+                    else if ((tmp + 1) / 2 >= mid) t++;
+                    if (t >= m) return 1;
+                    tmp >>= 1;
+                }
+                ret += t;
+                if (ret >= m) return 1;
+            }
+        }
+    }
+    return ret >= m;
+}
+int main() {
+#ifndef ONLINE_JUDGE
+    freopen("C.in", "r", stdin);
+#endif
+    int T; scanf("%d", &T);
+    while (T--) {
+        int i;
+        scanf("%d %d", &n, &m);
+        for (i = 0; i < n; ++i) {
+            scanf("%d", &arr[i]);
+        }
+        qsort(arr, n, sizeof(int), cmp);
+        int low = 0, high = 10000000;
+        while (low <= high) {
+            int mid = (low + high) >> 1;
+            if (check(mid)) low = mid + 1;
+            else high = mid - 1;
+        }
+        if (low == 1) puts("-1");
+        else printf("%d\n", low - 1);
+
+    }
+    return 0;
+}
+```
+### D
+求一元一次方程。
+两边其实是一样的，把x和常数项的系数分别求出来然后计算就可以。
+需要注意细节与符号的处理。
+
+```C
+#include <string.h>
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+#include <ctype.h>
+
+#define FLAG (flag ? -1: 1)
+
+int __gcd(int a, int b) {
+    return b ? __gcd(b, a % b) : a;
+}
+
+void deal(char* s, int* x, int *y) {
+    *x = *y = 0;
+    int len = strlen(s);
+    int flag = 0, digit = 0;
+    for (int i = 0; i < len; ++i) {
+        if (s[i] == '-') {
+            if (digit) *y += (flag ? -1: 1) *digit;
+            flag = 1;
+            digit = 0;
+        } else if (s[i] >= '0' && s[i] <= '9') digit = digit * 10 + (int)(s[i] - '0');
+        else if (s[i] == 'x') {
+            if (!digit && !isdigit(s[i-1])) digit = 1;
+            *x += (FLAG) * digit;
+            digit = 0;
+            flag = 0;
+        } else if (s[i] == '+') {
+            *y += (FLAG) * digit;
+            flag = 0;
+            digit = 0;
+        }
+    }
+    if (digit) *y += (FLAG) * digit;
+    // cout << *x << ' ' << *y << endl;
+}
+
+char s[155];
+int main() {
+
+#ifndef ONLINE_JUDGE
+    freopen("D.in", "r", stdin);
+#endif
+
+    while (scanf("%s", s) == 1) {
+        int st = 0, len = strlen(s);
+        while (st < len && s[st] != '=') st++;
+
+        int x, y, xx, yy;
+        char *second = &s[st+1];
+        s[st] = '\0';
+        deal(s, &x, &y);
+        deal(second, &xx, &yy);
+
+        x -= xx, yy -= y;
+
+        if (x) {
+            if (yy % x == 0) {
+                printf("x=%d\n", yy / x);
+            } else {
+                int flag = (x * yy < 0);
+                yy = abs(yy), x = abs(x);
+                int gcd = __gcd(yy, x);
+                printf("x=%d/%d\n", (flag ? - 1: 1) * yy / gcd, x / gcd);
+            }
+        } else {
+            if (yy == 0) {
+                puts("Infinite many solutions");
+            } else {
+                puts("No solution");
+            }
+        }
+    }
+    return 0;
+}
+```
+
+### E
+矩阵乘法。直接做就行。
+
